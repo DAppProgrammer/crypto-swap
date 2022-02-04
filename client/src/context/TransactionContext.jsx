@@ -21,22 +21,84 @@ const getEthereumContract = () => {
     signer,
     transactionContract
   });
+
+  return transactionContract;
 };
 
 export const TransactionProvider = ({ children }) => {
-  const checkIfWalletIsConnect = async () => {
-    if (!ethereum) return alert("Please install metamask!");
+  const [currentAccount, setCurrentAccount] = useState("");
 
-    const accounts = await ethereum.request({ method: "eth_accounts" });
-    console.log(accounts);
+  const [formData, setFormData] = useState({
+    addressTo: "",
+    amount: "",
+    keyword: "",
+    message: ""
+  });
+
+  const handleChange = (e, name) => {
+    setFormData((prevState) => ({ ...prevState, [name]: e.target.value }));
+  };
+
+  const checkIfWalletIsConnected = async () => {
+    try {
+      if (!ethereum) return alert("Please install metamask!");
+
+      const accounts = await ethereum.request({ method: "eth_accounts" });
+      console.log(accounts);
+      if (accounts.length) {
+        setCurrentAccount(accounts[0]);
+        //get all transactions
+      } else {
+        console.log("No account found!!!");
+      }
+    } catch (error) {
+      console.log(error);
+      throw new Error("No ethereum object");
+    }
+  };
+
+  const connectWallet = async () => {
+    try {
+      if (!ethereum) return alert("Please install metamask!");
+
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts"
+      });
+
+      setCurrentAccount(accounts[0]);
+    } catch (error) {
+      console.log(error);
+      throw new Error("No ethereum object");
+    }
+  };
+
+  const sendTransaction = async () => {
+    try {
+      if (!ethereum) return alert("Please install metamask!");
+
+      //get the data from the form
+      const { addressTo, amount, keyword, message } = formData;
+      const transactionContract = getEthereumContract();
+    } catch (error) {
+      console.log(error);
+      throw new Error("No ethereum object");
+    }
   };
 
   useEffect(() => {
-    checkIfWalletIsConnect();
+    checkIfWalletIsConnected();
   }, []);
 
   return (
-    <TransactionContext.Provider value={{ value: "test" }}>
+    <TransactionContext.Provider
+      value={{
+        connectWallet,
+        currentAccount,
+        formData,
+        sendTransaction,
+        handleChange
+      }}
+    >
       {children}
     </TransactionContext.Provider>
   );
